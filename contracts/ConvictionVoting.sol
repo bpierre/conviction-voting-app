@@ -127,7 +127,7 @@ contract ConvictionVoting is DisputableAragonApp, TokenManagerHook {
         uint256 _requestedAmount,
         address _beneficiary
     )
-        external isInitialized()
+        external isInitialized() auth(CREATE_PROPOSALS_ROLE)
     {
         uint256 agreementActionId = _newAgreementAction(proposalCounter, _link, msg.sender);
         proposals[proposalCounter] = Proposal(
