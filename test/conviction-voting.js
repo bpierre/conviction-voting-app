@@ -3,9 +3,7 @@
 const { getEventArgument } = require('@aragon/contract-helpers-test/events')
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
-const deployDAO = require('./helpers/deployDAO')
 const installApp = require('./helpers/installApp')
-const timeAdvancer = require('./helpers/timeAdvancer')
 const deployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
 
 const ConvictionVoting = artifacts.require('ConvictionVotingMock')
@@ -785,8 +783,7 @@ contract('ConvictionVoting', ([appManager, user, beneficiary]) => {
 
       it('returns true when vote has reached threshold but not been executed', async () => {
         await convictionVoting.stakeToProposal(proposalId, 15000, { from: appManager })
-        await timeAdvancer.advanceTimeAndBlocksBy(15 * 10, 10)
-
+        await convictionVoting.mockAdvanceBlocks(10)
         const canChallenge = await convictionVoting.canChallenge(proposalId)
 
         assert.isTrue(canChallenge)
@@ -794,7 +791,7 @@ contract('ConvictionVoting', ([appManager, user, beneficiary]) => {
 
       it('returns false when vote has been executed', async () => {
         await convictionVoting.stakeToProposal(proposalId, 15000, { from: appManager })
-        await timeAdvancer.advanceTimeAndBlocksBy(15 * 10, 10)
+        await convictionVoting.mockAdvanceBlocks(10)
         await convictionVoting.executeProposal(proposalId, { from: user })
 
         const canChallenge = await convictionVoting.canChallenge(proposalId)
@@ -830,7 +827,7 @@ contract('ConvictionVoting', ([appManager, user, beneficiary]) => {
 
       it('returns true when vote has been executed', async () => {
         await convictionVoting.stakeToProposal(proposalId, 15000, { from: appManager })
-        await timeAdvancer.advanceTimeAndBlocksBy(15 * 10, 10)
+        await convictionVoting.mockAdvanceBlocks(10)
         await convictionVoting.executeProposal(proposalId, { from: user })
 
         const canClose = await convictionVoting.canClose(proposalId)
