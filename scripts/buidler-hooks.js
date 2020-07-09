@@ -55,7 +55,7 @@ const deployVault = async (experimentalAppInstaller) => {
   vault = await experimentalAppInstaller("vault", { network: 'rinkeby' })
   console.log(`> Vault deployed: ${vault.address}`)
 
-  const finance = await experimentalAppInstaller("finance", { network: 'rinkeby', initializeArgs: [vault.address, 200000] })
+  const finance = await experimentalAppInstaller("finance", { initializeArgs: [vault.address, 200000] })
   await finance.createPermission('CREATE_PAYMENTS_ROLE', ANY_ENTITY)
   console.log(`> Finance deployed: ${finance.address}`)
 }
