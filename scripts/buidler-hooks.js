@@ -13,6 +13,10 @@ const toBnWithDecimals = (value, decimals) => {
 
 module.exports = {
   postDao: async function({ dao, _experimentalAppInstaller }, builderRuntimeEnv) {
+    // console.log(builderRuntimeEnv.config)
+    // console.log(builderRuntimeEnv.config.networks)
+    // console.log(builderRuntimeEnv.config.networks.rinkeby)
+    // console.log(builderRuntimeEnv.web3.currentProvider)
     await postDao(dao, _experimentalAppInstaller, builderRuntimeEnv)
   },
 
@@ -48,8 +52,12 @@ const postDao = async (dao, experimentalAppInstaller, builderRuntimeEnv) => {
 }
 
 const deployVault = async (experimentalAppInstaller) => {
-  vault = await experimentalAppInstaller("vault")
+  vault = await experimentalAppInstaller("vault", { network: 'rinkeby' })
   console.log(`> Vault deployed: ${vault.address}`)
+
+  const finance = await experimentalAppInstaller("finance", { network: 'rinkeby', initializeArgs: [vault.address, 200000] })
+  await finance.createPermission('CREATE_PAYMENTS_ROLE', ANY_ENTITY)
+  console.log(`> Finance deployed: ${finance.address}`)
 }
 
 const deployMinimeToken = async (builderRuntimeEnv) => {
@@ -60,19 +68,19 @@ const deployMinimeToken = async (builderRuntimeEnv) => {
 }
 
 const deployStakeTokenManager = async (dao, acl, builderRuntimeEnv, experimentalAppInstaller) => {
-
-  const hookedTokenManager = await experimentalAppInstaller('hooked-token-manager.open.aragonpm.eth', { version: '1.0.0', network: 'rinkeby' })
-
+  // One day this should work and we can see the UI for the TokenManagerApp
+  const hookedTokenManager = await experimentalAppInstaller('gardens-token-manager.open.aragonpm.eth',
+    { network: 'rinkeby', skipInitialize: true })
   // const HookedTokenManager = builderRuntimeEnv.artifacts.require('HookedTokenManager')
   // const hookedTokenManagerBase = await HookedTokenManager.new()
   // const newHookedTokenManagerReceipt = await dao.newAppInstance(HOOKED_TOKEN_MANAGER_APP_ID, hookedTokenManagerBase.address, "0x", false)
   // const hookedTokenManager = await HookedTokenManager.at(getNewProxyAddress(newHookedTokenManagerReceipt));
   //
-  // await stakeToken.changeController(hookedTokenManager.address)
-  await hookedTokenManager.initialize(stakeToken.address, true, 0)
-  //
-  // await acl.createPermission(ANY_ENTITY, hookedTokenManager.address, await hookedTokenManagerBase.MINT_ROLE(), appManager);
-  // await acl.createPermission(ANY_ENTITY, hookedTokenManager.address, await hookedTokenManagerBase.BURN_ROLE(), appManager);
+  await stakeToken.changeController(hookedTokenManager.address)
+  await hookedTokenManager.initialize([stakeToken.address, true, 0])
+
+  await hookedTokenManager.createPermission("MINT_ROLE", ANY_ENTITY)
+  await hookedTokenManager.createPermission("BURN_ROLE", ANY_ENTITY)
 
   console.log(`> StakeTokenManager deployed: ${hookedTokenManager.address}`)
 }
