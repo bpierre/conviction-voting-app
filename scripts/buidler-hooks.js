@@ -1,11 +1,9 @@
-const { getNewProxyAddress } = require("@aragon/contract-helpers-test/events");
-
 let appManager, user
-let vault, stakeToken, stakeTokeManager, requestToken
+let vault, stakeToken, stakeTokenManager, requestToken
 
-const ANY_ENTITY = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+const ANY_ENTITY = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-const HOOKED_TOKEN_MANAGER_APP_ID = "0xb2d2065b829a91588c8b9a15d99acd026f6673733603c6c60e505654eb2b472d"
+
 const toBnWithDecimals = (value, decimals) => {
   const BN = web3.utils.toBN
   return BN(value).mul(BN(10).pow(BN(decimals)))
@@ -13,11 +11,7 @@ const toBnWithDecimals = (value, decimals) => {
 
 module.exports = {
   postDao: async function({ dao, _experimentalAppInstaller }, builderRuntimeEnv) {
-    // console.log(builderRuntimeEnv.config)
-    // console.log(builderRuntimeEnv.config.networks)
-    // console.log(builderRuntimeEnv.config.networks.rinkeby)
-    // console.log(builderRuntimeEnv.web3.currentProvider)
-    await postDao(dao, _experimentalAppInstaller, builderRuntimeEnv)
+    await postDao(_experimentalAppInstaller, builderRuntimeEnv)
   },
 
   getInitParams: async function({}, builderRuntimeEnv) {
@@ -30,12 +24,17 @@ module.exports = {
       2, /* weight */
       toBnWithDecimals(20, 16) /* 20% */
     ]
+  },
+
+  postInit: async ({ proxy }, { web3, artifacts }) => {
+    const HookedTokenManager = artifacts.require('HookedTokenManager')
+    const stakeTokenManagerContract = await HookedTokenManager.at(stakeTokenManager.address)
+    await stakeTokenManagerContract.registerHook(proxy.address)
   }
 }
 
-const postDao = async (dao, experimentalAppInstaller, builderRuntimeEnv) => {
+const postDao = async (experimentalAppInstaller, builderRuntimeEnv) => {
   [appManager, user] = await web3.eth.getAccounts()
-  const acl = await builderRuntimeEnv.artifacts.require("ACL").at(await dao.acl());
 
   await deployVault(experimentalAppInstaller)
 
@@ -44,7 +43,7 @@ const postDao = async (dao, experimentalAppInstaller, builderRuntimeEnv) => {
   await stakeToken.generateTokens(user, toBnWithDecimals(15000, 18))
   console.log(`> Stake token deployed: ${stakeToken.address}`)
 
-  await deployStakeTokenManager(dao, acl, builderRuntimeEnv, experimentalAppInstaller)
+  await deployStakeTokenManager(experimentalAppInstaller)
 
   requestToken = await deployMinimeToken(builderRuntimeEnv)
   await requestToken.generateTokens(vault.address, toBnWithDecimals(15000, 18))
@@ -52,12 +51,8 @@ const postDao = async (dao, experimentalAppInstaller, builderRuntimeEnv) => {
 }
 
 const deployVault = async (experimentalAppInstaller) => {
-  vault = await experimentalAppInstaller("vault", { network: 'rinkeby' })
+  vault = await experimentalAppInstaller('vault')
   console.log(`> Vault deployed: ${vault.address}`)
-
-  const finance = await experimentalAppInstaller("finance", { initializeArgs: [vault.address, 200000] })
-  await finance.createPermission('CREATE_PAYMENTS_ROLE', ANY_ENTITY)
-  console.log(`> Finance deployed: ${finance.address}`)
 }
 
 const deployMinimeToken = async (builderRuntimeEnv) => {
@@ -67,20 +62,18 @@ const deployMinimeToken = async (builderRuntimeEnv) => {
   return await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'MiniMeToken', 18, 'MMT', true)
 }
 
-const deployStakeTokenManager = async (dao, acl, builderRuntimeEnv, experimentalAppInstaller) => {
-  // One day this should work and we can see the UI for the TokenManagerApp
-  const hookedTokenManager = await experimentalAppInstaller('gardens-token-manager.open.aragonpm.eth',
+const deployStakeTokenManager = async (experimentalAppInstaller) => {
+  // There is currently a bug in the experimentalAppInstaller or elsewhere that prevents the display of
+  // the IPFS content for the below app in the local client: https://github.com/aragon/buidler-aragon/issues/178
+  stakeTokenManager = await experimentalAppInstaller('gardens-token-manager.open.aragonpm.eth',
     { network: 'rinkeby', skipInitialize: true })
-  // const HookedTokenManager = builderRuntimeEnv.artifacts.require('HookedTokenManager')
-  // const hookedTokenManagerBase = await HookedTokenManager.new()
-  // const newHookedTokenManagerReceipt = await dao.newAppInstance(HOOKED_TOKEN_MANAGER_APP_ID, hookedTokenManagerBase.address, "0x", false)
-  // const hookedTokenManager = await HookedTokenManager.at(getNewProxyAddress(newHookedTokenManagerReceipt));
-  //
-  await stakeToken.changeController(hookedTokenManager.address)
-  await hookedTokenManager.initialize([stakeToken.address, true, 0])
 
-  await hookedTokenManager.createPermission("MINT_ROLE", ANY_ENTITY)
-  await hookedTokenManager.createPermission("BURN_ROLE", ANY_ENTITY)
+  await stakeToken.changeController(stakeTokenManager.address)
+  await stakeTokenManager.initialize([stakeToken.address, true, 0])
 
-  console.log(`> StakeTokenManager deployed: ${hookedTokenManager.address}`)
+  await stakeTokenManager.createPermission('MINT_ROLE')
+  await stakeTokenManager.createPermission('BURN_ROLE')
+  await stakeTokenManager.createPermission('SET_HOOK_ROLE')
+
+  console.log(`> StakeTokenManager deployed: ${stakeTokenManager.address}`)
 }
