@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@aragon/connect-core@*":
+"@aragon/connect-core@*", "@aragon/connect-core@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@aragon/connect-core/-/connect-core-0.2.0.tgz#ea31e3175aea5a9c3c93c604bf103dc01e5b00b1"
   integrity sha512-YB+yatoHXO+KdYlJP3y6qa1bvqe8VE6H9s7BqwS0f8RtWCADt81iMM617f+NYkmCn/stzupo8N0eHA197DMe6g==
@@ -10,7 +10,7 @@
     ethers "^5.0.0-beta.188"
     radspec "^2.0.0-rc.1"
 
-"@aragon/connect-thegraph@*":
+"@aragon/connect-thegraph@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@aragon/connect-thegraph/-/connect-thegraph-0.2.0.tgz#51f6853528cb1cd00514a360222f330c42f029b7"
   integrity sha512-sQsrt7rnynizrVT5P9gETcTLfsCcHcrZm4ILTZc0LKtmMFzyC88A5XGBG1E4fekeqUX1z3IW9YTm3JoDQ81LkA==
@@ -1128,9 +1128,9 @@ levn@^0.3.0, levn@~0.3.0:
     type-check "~0.3.2"
 
 lodash@^4.17.14, lodash@^4.17.15:
-  version "4.17.15"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
-  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
+  version "4.17.19"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.19.tgz#e48ddedbe30b3321783c5b4301fbd353bc1e4a4b"
+  integrity sha512-JNvd8XER9GQX0v2qJgsaN/mzFCNA5BRe/j8JN9d+tWyGLSodKQHKFicdwNYzWwI3wjRnaKPsGj1XkBjx/F96DQ==
 
 mimic-fn@^2.1.0:
   version "2.1.0"
